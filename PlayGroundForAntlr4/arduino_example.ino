@@ -25,6 +25,7 @@ int LED_PIN = 0;
 int led1 = 1;
 int led2 = 2;
 int led3 = 3;
+int led3 = 5;
 
 void setup()
 {
