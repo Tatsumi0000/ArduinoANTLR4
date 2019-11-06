@@ -1,19 +1,17 @@
 class ArduinoListener() : CPP14BaseListener() {
-    // 型，変数名，値が入る配列
-//    private var variable = arrayListOf<Variable>()
     // 配列の何番目かを管理する変数
     private var variableCount: Int = 0
     // setup関数に入ったかどうか．
     private var setupFunction: Boolean = false
     // loop関数に入ったかどうか．
     private var loopFunction: Boolean = false
+    // 型，変数名，値が入るMap
     private var variable = mutableMapOf<String, Variable>()
     private var variableType = ""
     private var variableName = ""
     private var variableValue = ""
 
     init {
-//        this.variable[0] = Variable("", "", "")
         this.variableCount = 0
     }
 
@@ -42,12 +40,8 @@ class ArduinoListener() : CPP14BaseListener() {
         println("Simpletypespecifier: ${ctx?.getChild(0)?.text}")
         // loop関数に入ってないなら
         if (!this.loopFunction) {
-            if (ctx?.getChild(0) != null) {
-                this.variableType = ctx.getChild(0).text
-            }
+            this.variableType = ctx?.getChild(0)?.text ?: "null"
         }
-
-//        this.variable[variableCount].type = ctx?.getChild(0)?.text
     }
 
     override fun exitSimpletypespecifier(ctx: CPP14Parser.SimpletypespecifierContext?) {
@@ -58,13 +52,8 @@ class ArduinoListener() : CPP14BaseListener() {
     override fun enterUnqualifiedid(ctx: CPP14Parser.UnqualifiedidContext?) {
         println("Unqualifiedid: ${ctx?.getChild(0)?.text}")
         if (!this.loopFunction) {
-            println("CCCC")
-            if (ctx?.getChild(0) != null) {
-                this.variableName = ctx.getChild(0).text
-            }
+            this.variableName = ctx?.getChild(0)?.text ?: "null"
         }
-
-
     }
 
     override fun exitUnqualifiedid(ctx: CPP14Parser.UnqualifiedidContext?) {
@@ -79,9 +68,7 @@ class ArduinoListener() : CPP14BaseListener() {
         println("Literal: ${ctx?.getChild(0)?.text}")
         // loop関数に入ってないなら
         if (!this.loopFunction) {
-            if (ctx?.getChild(0) != null) {
-                this.variable[this.variableName] = Variable(this.variableType, ctx.getChild(0).text)
-            }
+            this.variable[this.variableName] = Variable(type = this.variableType, value = ctx?.getChild(0)?.text ?: "null")
         }
     }
 

@@ -14,14 +14,5 @@ fun main(args: Array<String>) {
     val arduinoListener = ArduinoListener()
     walker.walk(arduinoListener, parseTree)
     println(arduinoListener.getVariable())
-//    val variable: ArrayList<Variable> = arrayListOf(Variable("", "", ""))
-//
-//    variable[0].type = "TYPE"
-//    variable[0].name = "NAME"
-//    variable[0].value = "VALUE"
-//    variable.add(Variable("","",""))
-//    println(variable)
-
-
     println("finished...")
 }
