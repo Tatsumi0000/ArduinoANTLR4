@@ -1,6 +1,6 @@
 data class Variable(
-    var type: String?,
-    var value: String?
+    var type: String,
+    var value: String
 )
 
 data class Variable2(

@@ -15,4 +15,9 @@ fun main(args: Array<String>) {
     walker.walk(arduinoListener, parseTree)
     println(arduinoListener.getVariable())
     println("finished...")
+
+//    var variable: MutableMap<String, Variable> = mutableMapOf()
+//    variable["a"] = Variable("", "")
+//    println(variable)
+
 }

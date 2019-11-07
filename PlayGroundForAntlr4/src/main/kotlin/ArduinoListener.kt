@@ -7,6 +7,7 @@ class ArduinoListener() : CPP14BaseListener() {
     private var loopFunction: Boolean = false
     // 型，変数名，値が入るMap
     private var variable = mutableMapOf<String, Variable>()
+    //    private var variable: MutableMap<String, Variable> = mutableMapOf()
     private var variableType = ""
     private var variableName = ""
     private var variableValue = ""
@@ -82,7 +83,7 @@ class ArduinoListener() : CPP14BaseListener() {
     }
 
     // 変数variableを返すゲッター
-    fun getVariable(): Map<String, Variable> {
+    fun getVariable(): MutableMap<String, Variable> {
         return this.variable
     }
 }
