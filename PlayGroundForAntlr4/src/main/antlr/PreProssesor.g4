@@ -1,4 +1,0 @@
-lexer grammar PreProssesor; // おまじない
-
-
-

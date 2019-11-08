@@ -1,0 +1,7 @@
+SHARP=1
+DEFINE=2
+STATE_END=3
+WHITESPACE=4
+'#'=1
+'define'=2
+'\n'=3
