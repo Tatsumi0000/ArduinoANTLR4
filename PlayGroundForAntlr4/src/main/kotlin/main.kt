@@ -15,6 +15,11 @@ fun main(args: Array<String>) {
 //    walker.walk(arduinoListener, parseTree)
 //    println(arduinoListener.getVariable())
 
+    /**
+     * 参考サイト
+     * https://qiita.com/toastkidjp/items/d4d208a22727c6832da7
+     * https://stackoverflow.com/a/42739533
+     */
     // 適当にdata classを初期化
     val arduinoPinStatus = ArduinoPinStatus()
     // Moshiオブジェクトを指定後，adapterメソッドで変換対象のクラスを指定
