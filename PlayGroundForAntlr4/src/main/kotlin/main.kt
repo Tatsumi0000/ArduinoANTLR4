@@ -15,18 +15,13 @@ fun main(args: Array<String>) {
 //    walker.walk(arduinoListener, parseTree)
 //    println(arduinoListener.getVariable())
 
-    val arduinoPinStatus = ArduinoPinStatus() // とりあえず適当にjson化したいclassを初期化
+    // 適当にdata classを初期化
+    val arduinoPinStatus = ArduinoPinStatus()
+    // Moshiオブジェクトを指定後，adapterメソッドで変換対象のクラスを指定
     val adapter = Moshi.Builder().build().adapter(ArduinoPinStatus::class.java)
-    val jsonText = adapter.toJson(arduinoPinStatus)
-    val buffer = Buffer()
-    val prettyPrint = JsonWriter.of(buffer)
-    prettyPrint.indent = "  "
-    adapter.toJson(prettyPrint, arduinoPinStatus)
-    val json = buffer.readUtf8()
-    println(json)
-
+    // indentを設定後，json化したいやつを入れる
+    val jsonText = adapter.indent("   ").toJson(arduinoPinStatus)
     println(jsonText)
-
     println("finished...")
 
 
