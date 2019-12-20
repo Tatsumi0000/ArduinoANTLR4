@@ -1,3 +1,8 @@
+import java.sql.Timestamp
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+// 変数の情報を持つ
 data class Variable(
     var type: String,
     var value: String
@@ -55,4 +60,24 @@ data class PinStatus(
     var isLow: Boolean = true,
     var isInput: Boolean = true,
     var voltValue: Double = 0.0
+)
+
+/**
+ * 最終的に出力するjsonを表現するクラス
+ */
+data class OutputData(
+    val apiInfo: ApiInfo,
+    val parseData: ArduinoPinStatus = ArduinoPinStatus()
+)
+
+/**
+ * apiの情報を扱うクラス
+ * timestampはLocalDateを使おうと思ったけど，
+ * プリミティブ型以外のはオリジナルでアダプターを作らないと面倒なので
+ * 無理やりString型でやる．
+ */
+data class ApiInfo(
+    val timestamp: String,
+    val programingLanguage: String,
+    val apiVer: Double
 )
