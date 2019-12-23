@@ -42,7 +42,7 @@ data class ArduinoPinStatus(
     var analogPin03: PinStatus = PinStatus(), // 17
     var analogPin04: PinStatus = PinStatus(), // 18
     var analogPin05: PinStatus = PinStatus(), // 19
-    var vin: PinStatus = PinStatus(isLow = true, isInput = true, voltValue = 10.0),
+    var vin: PinStatus = PinStatus(isLow = false, isInput = false, voltValue = 10.0),
     val GND1: PinStatus = PinStatus(isLow = true, isInput = true, voltValue = 0.0),
     val GND2: PinStatus = PinStatus(isLow = true, isInput = true, voltValue = 0.0),
     var volt5_0v: PinStatus = PinStatus(isLow = false, isInput = false, voltValue = 5.0),

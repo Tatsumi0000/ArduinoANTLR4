@@ -1,18 +1,10 @@
-import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
-import okio.Buffer
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeWalker
-import java.io.IOException
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 
-fun main(args: Array<String>) {
+fun main() {
     val charStream = CharStreams.fromFileName("./arduino_example.ino")
     val cpP14Lexer = CPP14Lexer(charStream)
     val stream = CommonTokenStream(cpP14Lexer)
@@ -22,6 +14,13 @@ fun main(args: Array<String>) {
     val arduinoListener = ArduinoListener()
     walker.walk(arduinoListener, parseTree)
     println(arduinoListener.getVariable())
+    val adapter = Moshi.Builder().build().adapter(ArduinoPinStatus::class.java)
+    val jsonText = adapter.indent("   ").toJson(arduinoListener.getArduinoPinStatus())
+    println(jsonText)
+
+//    val regex = Regex("""^[0-9]""")
+//    val a = "z012aaaa"
+//    println(regex.containsMatchIn(a))
 
     /**
      * 参考サイト

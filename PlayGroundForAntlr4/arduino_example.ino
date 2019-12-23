@@ -17,11 +17,12 @@ void setup()
 
 void loop()
 {
-  Serial.println("Hello, World");
-  delay(500);
-  digitalWrite(led3, HIGH);
-  delay(500);
-  digitalWrite(led3, LOW);
+digitalWrite(led3, HIGH);
+//   Serial.println("Hello, World");
+//   delay(500);
+//   digitalWrite(led3, HIGH);
+//   delay(500);
+//   digitalWrite(led3, LOW);
 }
 
 

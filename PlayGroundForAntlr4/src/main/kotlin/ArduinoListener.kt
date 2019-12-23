@@ -7,18 +7,19 @@ class ArduinoListener() : CPP14BaseListener() {
     private var isSetupFunction: Boolean = false
     // loop関数に入ったかどうか．
     private var isLoopFunction: Boolean = false
-    // 型，変数名，値が入るMap
-    private var variable: MutableMap<String, Variable> = mutableMapOf<String, Variable>()
+    // 型，変数名，値が入る可変Map
+    private var variable: MutableMap<String, Variable> = mutableMapOf()
     //    private var variable: MutableMap<String, Variable> = mutableMapOf()
     private var variableType = ""
     private var variableName = ""
     private var variableValue = ""
-//    private var arduinoPinStatus = ArduinoPinStatus()
-//    private val typeList = listOf<String>("String", "int")
+    private var arduinoConverter: ArduinoConverter // Arduinoのピン番号や状態（HIGHやOUTPUT）を変換する
+    private var arduinoPinStatus: ArduinoPinStatus // Arduinoのピン状態を持つ
 
     init {
         this.variableCount = 0
-//        println(arduinoPinStatus.GND0)
+        this.arduinoPinStatus = ArduinoPinStatus()
+        this.arduinoConverter = ArduinoConverter(arduinoPinStatus = this.arduinoPinStatus)
     }
 
     override fun enterTranslationunit(ctx: CPP14Parser.TranslationunitContext?) {
@@ -99,6 +100,11 @@ class ArduinoListener() : CPP14BaseListener() {
         }
     }
 
+    /**
+     * ここは，
+     * pinMode，delay，Serial.begin，digitalWrite
+     * などが入っている．
+     */
     override fun enterPostfixexpression(ctx: CPP14Parser.PostfixexpressionContext?) {
 //        println("Postfixexpression: ${ctx?.text}")
         val postFixExpressionChildCount: Int = ctx?.childCount ?: 0
@@ -115,11 +121,22 @@ class ArduinoListener() : CPP14BaseListener() {
             expressionListTree = ctx.getChild(2)
             if (postFixExpressionTree0.text == "pinMode") {
                 println("pinModeだお")
+                arduinoConverter.changePinStatus(
+                    expressionListTree.getChild(0).getChild(2).text,
+                    variable,
+                    expressionListTree.getChild(0).getChild(0).text
+                )
             }
             if (postFixExpressionTree0.text == "digitalWrite") {
                 println("digitalWriteだお")
+                arduinoConverter.changePinStatus(
+                    expressionListTree.getChild(0).getChild(2).text,
+                    variable,
+                    expressionListTree.getChild(0).getChild(0).text
+                )
+
             }
-            println(expressionListTree.text)
+//            println(expressionListTree.getChild(0).getChild(0).text)
         }
     }
 
@@ -127,5 +144,9 @@ class ArduinoListener() : CPP14BaseListener() {
     // 変数variableを返すゲッター
     fun getVariable(): MutableMap<String, Variable> {
         return this.variable
+    }
+
+    fun getArduinoPinStatus(): ArduinoPinStatus {
+        return this.arduinoPinStatus
     }
 }
