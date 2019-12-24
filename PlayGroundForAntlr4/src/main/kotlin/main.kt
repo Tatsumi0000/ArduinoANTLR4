@@ -17,8 +17,8 @@ fun main() {
     val adapter = Moshi.Builder().build().adapter(ArduinoPinStatus::class.java)
     val jsonText = adapter.indent("   ").toJson(arduinoListener.getArduinoPinStatus())
     println(jsonText)
+    //    val regex = Regex("""^[0-9]""")
 
-//    val regex = Regex("""^[0-9]""")
 //    val a = "z012aaaa"
 //    println(regex.containsMatchIn(a))
 
