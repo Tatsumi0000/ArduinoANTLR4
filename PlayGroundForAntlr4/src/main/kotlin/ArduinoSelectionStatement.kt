@@ -2,7 +2,10 @@ import CPP.CPP14Parser
 import org.antlr.v4.runtime.tree.ParseTree
 
 /**
- * 式を評価する
+ * 式を評価するクラス
+ * 現在対応しているif文は，単純なものばかりです．
+ * &&や||の式を評価したいならこのクラスを使ってすべてがtrueかどうかを判断する
+ * @author T.N.Revolution
  */
 data class FormulaInt(
     var leftSideExpression: Double,
