@@ -1,6 +1,8 @@
 import org.antlr.v4.runtime.tree.ParseTree
 
 class ArduinoListener() : CPP14BaseListener() {
+    // デバッグ用のカウント
+    private var debugCount = 0
     // 配列の何番目かを管理する変数
     private var variableCount: Int = 0
     // setup関数に入ったかどうか．
@@ -15,11 +17,13 @@ class ArduinoListener() : CPP14BaseListener() {
     private var variableValue = ""
     private var arduinoConverter: ArduinoConverter // Arduinoのピン番号や状態（HIGHやOUTPUT）を変換する
     private var arduinoPinStatus: ArduinoPinStatus // Arduinoのピン状態を持つ
+    private var arduinoSelectionStatement: ArduinoSelectionStatement
 
     init {
         this.variableCount = 0
         this.arduinoPinStatus = ArduinoPinStatus()
         this.arduinoConverter = ArduinoConverter(arduinoPinStatus = this.arduinoPinStatus)
+        this.arduinoSelectionStatement = ArduinoSelectionStatement()
     }
 
     override fun enterTranslationunit(ctx: CPP14Parser.TranslationunitContext?) {
@@ -67,24 +71,24 @@ class ArduinoListener() : CPP14BaseListener() {
         val initDeclaratorListTree: ParseTree
         // int i = 0;みたいな時
         if (simpledeclarationChildCount == 3) {
-            println("int i = 0;みたいな時")
+//            println("int i = 0;みたいな時")
             initDeclaratorListTree = ctx?.getChild(1) ?: run {
                 print("｛変数名=値｝のところがnullでヤンス．")
                 return
             }
-            println("型: ${ctx.getChild(0)?.text}")
-            println("変数名=値: ${ctx.getChild(1)?.text}")
-            println("変数名: ${initDeclaratorListTree.getChild(0).getChild(0).text}")
-            println("=: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(0).text}")
-            println("値: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text}")
-            println(";: ${ctx.getChild(2)?.text}")
+//            println("型: ${ctx.getChild(0)?.text}")
+//            println("変数名=値: ${ctx.getChild(1)?.text}")
+//            println("変数名: ${initDeclaratorListTree.getChild(0).getChild(0).text}")
+//            println("=: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(0).text}")
+//            println("値: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text}")
+//            println(";: ${ctx.getChild(2)?.text}")
             this.variableType = ctx.getChild(0)?.text ?: "Not Found Type"
             this.variableName = initDeclaratorListTree.getChild(0).getChild(0).text
             this.variableValue = initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text
             this.variable[this.variableName] = Variable(type = this.variableType, value = this.variableValue)
 
         } else if (simpledeclarationChildCount == 2) { // i = 0;みたいな時
-            println("i = 0;みたいな時")
+            //println("i = 0;みたいな時")
             initDeclaratorListTree = ctx?.getChild(0) ?: run {
                 print("｛変数名=値｝のところがnullでヤンス．")
                 return
@@ -134,12 +138,44 @@ class ArduinoListener() : CPP14BaseListener() {
                     variable,
                     expressionListTree.getChild(0).getChild(0).text
                 )
-
             }
-//            println(expressionListTree.getChild(0).getChild(0).text)
         }
     }
 
+    /**
+     * if文に入るとき
+     */
+    override fun enterSelectionstatement(ctx: CPP14Parser.SelectionstatementContext?) {
+        val expression: ParseTree =
+            ctx?.getChild(2)?.getChild(0)?.getChild(0)?.getChild(0)?.getChild(0)?.getChild(0)?.getChild(0)?.getChild(0)?.getChild(
+                0
+            )?.getChild(0) ?: run {
+                println("nullでヤンス．")
+                return
+            }
+        this.debugCount++ // debug
+        val judge: Boolean
+        // RelationalexpressionContextなら木をもう1つ深くする
+        println("${debugCount}: ${expression.getChild(0).text}")
+        judge = if (expression.getChild(0) is CPP14Parser.RelationalexpressionContext) {
+            arduinoSelectionStatement.judgeCondition(expression.getChild(0), this.variable)
+        } else {
+            arduinoSelectionStatement.judgeCondition(expression, this.variable)
+        }
+//        this.debugCount++
+        println("${this.debugCount}回目のif文を評価した結果${judge}ですよ．")
+        // if文を評価した結果trueだと色々頑張る
+        if (judge) {
+            val statementSeq = ctx.getChild(3)
+            for (i in 0..statementSeq.childCount) {
+                if (ctx.getChild(i) is CPP14Parser.StatementContext) {
+                    val variableName = ctx.getChild(i).getChild(0).getChild(0).getChild(0).text
+                    val variableValue = ctx.getChild(i).getChild(0).getChild(0).getChild(2).text
+                    this.variable[variableName]?.value = variableValue
+                }
+            }
+        }
+    }
 
     // 変数variableを返すゲッター
     fun getVariable(): MutableMap<String, Variable> {

@@ -14,9 +14,12 @@ fun main() {
     val arduinoListener = ArduinoListener()
     walker.walk(arduinoListener, parseTree)
     println(arduinoListener.getVariable())
+    /**
     val adapter = Moshi.Builder().build().adapter(ArduinoPinStatus::class.java)
     val jsonText = adapter.indent("   ").toJson(arduinoListener.getArduinoPinStatus())
     println(jsonText)
+    */
+
     //    val regex = Regex("""^[0-9]""")
 
 //    val a = "z012aaaa"

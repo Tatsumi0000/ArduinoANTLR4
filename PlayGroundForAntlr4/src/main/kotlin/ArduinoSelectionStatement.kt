@@ -1,4 +1,3 @@
-import CPP.CPP14Parser
 import org.antlr.v4.runtime.tree.ParseTree
 
 /**
@@ -7,7 +6,7 @@ import org.antlr.v4.runtime.tree.ParseTree
  * &&や||の式を評価したいならこのクラスを使ってすべてがtrueかどうかを判断する
  * @author T.N.Revolution
  */
-data class FormulaInt(
+data class FormulaDouble(
     var leftSideExpression: Double,
     var rightSideExpression: Double
 )
@@ -21,6 +20,8 @@ class ArduinoSelectionStatement {
     // [^0]0以外
     // ^0先頭が0
     private val regex = Regex("""^[0-9]""") // 正規表現を表す文字列．先頭が0〜9で始まる意味
+    private val booleanList = listOf("true", "false") // bool値が入っている固定長リスト
+    private val inequalitySign = listOf("==", ">=", "<=", ">", "<") // 不等号が入っている
 
     init {
 
@@ -35,68 +36,84 @@ class ArduinoSelectionStatement {
     fun judgeCondition(expression: ParseTree, variable: MutableMap<String, Variable>): Boolean {
         // 0番目は絶対に値が入っている
         val leftSideExpression: ParseTree = expression.getChild(0) // 左辺式
+        println("left1: ${leftSideExpression.text}")
         val relationalOperator: ParseTree
         val rightSideExpression: ParseTree
-        if (leftSideExpression.text == "!") {
-            //
-            return this.notEqual(variable, expression.getChild(1).text, "false", isBooleanLiteralContext = true)
-        }
-        // 配列の1番目がnullではないということは，ただのif(true)みたいな式だということ
-        if (expression.getChild(1) != null) {
-            relationalOperator = expression.getChild(1)
-        } else {
+//        println("${expression.getChild(0).text} ${expression.getChild(1).text} ${expression.getChild(2).text}")
+        // 配列の1番目がnullということは，ただのif(true)みたいな式だということ
+        if (expression.getChild(1) == null) {
+            println("ZZZ")
             return this.equal(variable, leftSideExpression.text, "true", isBooleanLiteralContext = true)
-        }
-        // 配列の2番目がnullではないということは，ただのif(!true)みたいな式だということ
-        if (expression.getChild(2) != null) {
-            rightSideExpression = expression.getChild(2)
         } else {
-            // ここに入るということは，
+            relationalOperator = expression.getChild(1)
+        }
+        // 配列の2番目がnullということは，ただのif(!true)みたいな式だということ
+        if (expression.getChild(2) == null) {
             // bool a = true;
             // if(!a)
             // みたいな式だから左辺の式に代入するのはrelationalOperator
             return this.notEqual(variable, leftSideExpression = relationalOperator.text, rightSideExpression = "false")
+        } else {
+            rightSideExpression = expression.getChild(2)
         }
+        println("不等号は，${relationalOperator.text}です．")
         when (relationalOperator.text) {
             "==" -> {
+                println("DEBUG: ${leftSideExpression.text}")
                 // 左辺，または右辺が真偽値だったら
-                if (leftSideExpression is CPP14Parser.BooleanliteralContext || rightSideExpression is CPP14Parser.BooleanliteralContext) {
-                    this.equal(
+                if (booleanList.contains(leftSideExpression.text) || booleanList.contains(rightSideExpression.text)) {
+                    return this.equal(
                         variable,
                         leftSideExpression.text,
                         rightSideExpression.text,
                         isBooleanLiteralContext = true
                     )
                 } else {
-                    this.equal(
+                    return this.equal(
                         variable,
                         leftSideExpression.text,
                         rightSideExpression.text
                     )
                 }
             }
-            ">" -> this.greaterThan(variable, leftSideExpression.text, rightSideExpression.text)
-            "<" -> this.lessThan(variable, leftSideExpression.text, rightSideExpression.text)
-            ">=" -> this.greaterThanOrEqual(variable, leftSideExpression.text, rightSideExpression.text)
-            "<=" -> this.lessThanOrEqual(variable, leftSideExpression.text, rightSideExpression.text)
-            "!=" -> // 左辺，または右辺が真偽値だったら
-                if (leftSideExpression is CPP14Parser.BooleanliteralContext || rightSideExpression is CPP14Parser.BooleanliteralContext) {
-                    this.notEqual(
+            ">" -> {
+                println(">: greaterThan")
+                return this.greaterThan(variable, leftSideExpression.text, rightSideExpression.text)
+            }
+            "<" -> {
+                println("<: lessThan")
+                return this.lessThan(variable, leftSideExpression.text, rightSideExpression.text)
+            }
+            ">=" -> {
+                println(">=: greaterThanOrEqual")
+                return this.greaterThanOrEqual(variable, leftSideExpression.text, rightSideExpression.text)
+            }
+            "<=" -> {
+                println("<=: lessThanOrEqual")
+                return this.lessThanOrEqual(variable, leftSideExpression.text, rightSideExpression.text)
+            }
+            "!=" -> {
+                // 左辺，または右辺が真偽値だったら
+                if ((leftSideExpression is CPP14Parser.EqualityexpressionContext && rightSideExpression is
+                            CPP14Parser.RelationalexpressionContext) || (leftSideExpression is CPP14Parser
+                    .RelationalexpressionContext && rightSideExpression is CPP14Parser.EqualityexpressionContext)
+                ) {
+                    return this.notEqual(
                         variable,
                         leftSideExpression.text,
                         rightSideExpression.text,
                         isBooleanLiteralContext = true
                     )
                 } else {
-                    this.notEqual(
+                    return this.notEqual(
                         variable,
                         leftSideExpression.text,
                         rightSideExpression.text
                     )
                 }
-//            else -> ""
+            }
         }
-        //
+        // ホントは，ここで例外を出したほうがいいと思う．
         println("最後まで来たゾイ")
         return false
     }
@@ -116,10 +133,12 @@ class ArduinoSelectionStatement {
         // 式が真偽値の場合
         return if (isBooleanLiteralContext) {
             val formulaBoolean = this.judgeVariableOrBoolean(variable, leftSideExpression, rightSideExpression)
+            println(formulaBoolean)
             formulaBoolean.leftSideExpression == formulaBoolean.rightSideExpression
         } else {
-            val formulaInt = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-            formulaInt.leftSideExpression == formulaInt.rightSideExpression
+            val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
+            println(formulaDouble)
+            formulaDouble.leftSideExpression == formulaDouble.rightSideExpression
         }
     }
 
@@ -135,8 +154,8 @@ class ArduinoSelectionStatement {
         leftSideExpression: String,
         rightSideExpression: String
     ): Boolean {
-        val formulaInt = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-        return formulaInt.leftSideExpression > formulaInt.rightSideExpression
+        val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
+        return formulaDouble.leftSideExpression > formulaDouble.rightSideExpression
     }
 
     /**
@@ -151,8 +170,8 @@ class ArduinoSelectionStatement {
         leftSideExpression: String,
         rightSideExpression: String
     ): Boolean {
-        val formulaInt = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-        return formulaInt.leftSideExpression < formulaInt.rightSideExpression
+        val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
+        return formulaDouble.leftSideExpression < formulaDouble.rightSideExpression
     }
 
     /**
@@ -167,8 +186,8 @@ class ArduinoSelectionStatement {
         leftSideExpression: String,
         rightSideExpression: String
     ): Boolean {
-        val formulaInt = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-        return formulaInt.leftSideExpression <= formulaInt.rightSideExpression
+        val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
+        return formulaDouble.leftSideExpression <= formulaDouble.rightSideExpression
     }
 
     /**
@@ -183,8 +202,9 @@ class ArduinoSelectionStatement {
         leftSideExpression: String,
         rightSideExpression: String
     ): Boolean {
-        val formulaInt = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-        return formulaInt.leftSideExpression >= formulaInt.rightSideExpression
+        val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
+        println(formulaDouble)
+        return formulaDouble.leftSideExpression >= formulaDouble.rightSideExpression
     }
 
     /**
@@ -205,13 +225,13 @@ class ArduinoSelectionStatement {
             val formulaBoolean = this.judgeVariableOrBoolean(variable, leftSideExpression, rightSideExpression)
             formulaBoolean.leftSideExpression != formulaBoolean.rightSideExpression
         } else {
-            val formulaInt = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-            formulaInt.leftSideExpression != formulaInt.rightSideExpression
+            val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
+            formulaDouble.leftSideExpression != formulaDouble.rightSideExpression
         }
     }
 
     /**
-     * 変数名かInt型か判断して変数だった場合にIntとして加工後，返す
+     * 変数名か数値型か判断して変数だった場合にDoubleとして加工後，返す
      * @param variable 変数を管理する可変Map
      * @param leftSideExpression 左辺の式
      * @param rightSideExpression 右辺の式
@@ -220,30 +240,29 @@ class ArduinoSelectionStatement {
         variable: MutableMap<String, Variable>,
         leftSideExpression: String,
         rightSideExpression: String
-    ): FormulaInt {
-        val formulaInt = FormulaInt(0.0, 0.0)
+    ): FormulaDouble {
+        val formulaDouble = FormulaDouble(0.0, 0.0)
         val isLeftSideExpressionInt = this.regex.containsMatchIn(leftSideExpression) // 先頭の始まりが０〜９だったらtrue
         val isRightSideExpressionInt = this.regex.containsMatchIn(rightSideExpression) // 先頭の始まりが０〜９だったらtrue
         // 左辺が数値だった場合
         if (isLeftSideExpressionInt) {
-            formulaInt.leftSideExpression = leftSideExpression.toDouble()
+            formulaDouble.leftSideExpression = leftSideExpression.toDouble()
             // 左辺が変数の場合
         } else {
-            // toInt()メソッドの返り値はInt?なのでIntに強制的にキャストしている．nullだとヌルポになる．
-            formulaInt.leftSideExpression = variable[leftSideExpression]?.value?.toDouble() as Double
+            formulaDouble.leftSideExpression = variable[leftSideExpression]?.value?.toDouble() ?: 0.0
         }
         // 右辺が数値だった場合
         if (isRightSideExpressionInt) {
-            formulaInt.rightSideExpression = rightSideExpression.toDouble()
+            formulaDouble.rightSideExpression = rightSideExpression.toDouble()
             // 右辺が変数の場合
         } else {
-            formulaInt.rightSideExpression = variable[rightSideExpression]?.value?.toDouble() as Double
+            formulaDouble.rightSideExpression = variable[rightSideExpression]?.value?.toDouble() ?: 0.0
         }
-        return formulaInt
+        return formulaDouble
     }
 
     /**
-     * 変数名かBoolean型か判断して変数だった場合にIntとして加工後，返す
+     * 変数名かBoolean型か判断して変数だった場合にBooleanとして加工後，返す
      * @param variable 変数を管理する可変Map
      * @param leftSideExpression 左辺の式
      * @param rightSideExpression 右辺の式
@@ -262,16 +281,29 @@ class ArduinoSelectionStatement {
                 else -> false
             }
         }
-        if (leftSideExpression == "true" || leftSideExpression == "false" || rightSideExpression == "true" ||
-            rightSideExpression == "false"
+//        if (leftSideExpression == "true" || leftSideExpression == "false" || rightSideExpression == "true" ||
+//            rightSideExpression == "false"
+//        )
+        // 左辺式が trueかfalseで右辺が変数式だったら
+        if (booleanList.contains(leftSideExpression) && !booleanList.contains(rightSideExpression)
         ) {
             formulaBoolean.leftSideExpression = convertBoolean(leftSideExpression)
-            formulaBoolean.rightSideExpression = convertBoolean(rightSideExpression)
-            // 変数のとき
-        } else {
-            formulaBoolean.leftSideExpression = variable[leftSideExpression]?.value?.toBoolean() as Boolean
-            formulaBoolean.rightSideExpression = variable[rightSideExpression]?.value?.toBoolean() as Boolean
+            formulaBoolean.rightSideExpression = variable[rightSideExpression]?.value?.toBoolean() ?: false
+            return formulaBoolean
         }
+        // 左辺式が変数で，右辺式がtrueかfalseのとき
+        if (!booleanList.contains(leftSideExpression) && booleanList.contains(rightSideExpression)
+        ) {
+            println(variable)
+            println("AAA: ${leftSideExpression}")
+            formulaBoolean.leftSideExpression = variable[leftSideExpression]?.value?.toBoolean() ?: false
+            formulaBoolean.rightSideExpression = convertBoolean(rightSideExpression)
+//            println(formulaBoolean)
+            return formulaBoolean
+        }
+        // ここまで来たら両辺ともtrueかfalseのみの式とういうこと
+        formulaBoolean.leftSideExpression = variable[leftSideExpression]?.value?.toBoolean() ?: false
+        formulaBoolean.rightSideExpression = variable[rightSideExpression]?.value?.toBoolean() ?: false
         return formulaBoolean
     }
 }
