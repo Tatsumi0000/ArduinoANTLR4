@@ -76,12 +76,6 @@ class ArduinoListener() : CPP14BaseListener() {
                 print("｛変数名=値｝のところがnullでヤンス．")
                 return
             }
-//            println("型: ${ctx.getChild(0)?.text}")
-//            println("変数名=値: ${ctx.getChild(1)?.text}")
-//            println("変数名: ${initDeclaratorListTree.getChild(0).getChild(0).text}")
-//            println("=: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(0).text}")
-//            println("値: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text}")
-//            println(";: ${ctx.getChild(2)?.text}")
             this.variableType = ctx.getChild(0)?.text ?: "Not Found Type"
             this.variableName = initDeclaratorListTree.getChild(0).getChild(0).text
             this.variableValue = initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text
@@ -93,14 +87,11 @@ class ArduinoListener() : CPP14BaseListener() {
                 print("｛変数名=値｝のところがnullでヤンス．")
                 return
             }
-//            println("変数名: ${initDeclaratorListTree.getChild(0).getChild(0).getChild(0).text}")
-//            println("=: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(0).text}")
-//            println("値: ${initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text}")
             // ここの書き方は，もっとおしゃれな書き方がきっとあると思います．
             this.variableName = initDeclaratorListTree.getChild(0).getChild(0).getChild(0).text
             this.variableValue = initDeclaratorListTree.getChild(0).getChild(1).getChild(0).getChild(1).text
-            val copyVariable = this.variable[this.variableName] as Variable  // 強制的にnon-nullにキャスト，失敗したら例外発生．
-            this.variable[this.variableName] = Variable(type = copyVariable.type, value = this.variableValue)
+            // 変数名をKeyとして変数の値を書き変える．
+            this.variable[this.variableName]?.value = this.variableValue
         }
     }
 
@@ -162,11 +153,11 @@ class ArduinoListener() : CPP14BaseListener() {
         } else {
             arduinoSelectionStatement.judgeCondition(expression, this.variable)
         }
-//        this.debugCount++
         println("${this.debugCount}回目のif文を評価した結果${judge}ですよ．")
         // if文を評価した結果trueだと色々頑張る
         if (judge) {
             val statementSeq = ctx.getChild(3)
+//            println("DEBUG:: ${statementSeq.text}")
             for (i in 0..statementSeq.childCount) {
                 if (ctx.getChild(i) is CPP14Parser.StatementContext) {
                     val variableName = ctx.getChild(i).getChild(0).getChild(0).getChild(0).text

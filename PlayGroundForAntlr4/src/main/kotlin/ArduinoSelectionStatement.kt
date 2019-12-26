@@ -21,7 +21,7 @@ class ArduinoSelectionStatement {
     // ^0先頭が0
     private val regex = Regex("""^[0-9]""") // 正規表現を表す文字列．先頭が0〜9で始まる意味
     private val booleanList = listOf("true", "false") // bool値が入っている固定長リスト
-    private val inequalitySign = listOf("==", ">=", "<=", ">", "<") // 不等号が入っている
+    private val inequalitySign = listOf("==", "!=", ">=", "<=", ">", "<") // 不等号が入っている
 
     init {
 
@@ -36,13 +36,13 @@ class ArduinoSelectionStatement {
     fun judgeCondition(expression: ParseTree, variable: MutableMap<String, Variable>): Boolean {
         // 0番目は絶対に値が入っている
         val leftSideExpression: ParseTree = expression.getChild(0) // 左辺式
-        println("left1: ${leftSideExpression.text}")
+//        println("left1: ${leftSideExpression.text}")
         val relationalOperator: ParseTree
         val rightSideExpression: ParseTree
 //        println("${expression.getChild(0).text} ${expression.getChild(1).text} ${expression.getChild(2).text}")
         // 配列の1番目がnullということは，ただのif(true)みたいな式だということ
         if (expression.getChild(1) == null) {
-            println("ZZZ")
+//            println("ZZZ")
             return this.equal(variable, leftSideExpression.text, "true", isBooleanLiteralContext = true)
         } else {
             relationalOperator = expression.getChild(1)
@@ -56,20 +56,20 @@ class ArduinoSelectionStatement {
         } else {
             rightSideExpression = expression.getChild(2)
         }
-        println("不等号は，${relationalOperator.text}です．")
+//        println("不等号は，${relationalOperator.text}です．")
         when (relationalOperator.text) {
             "==" -> {
-                println("DEBUG: ${leftSideExpression.text}")
+                println("評価する不等号は，「==」equal")
                 // 左辺，または右辺が真偽値だったら
-                if (booleanList.contains(leftSideExpression.text) || booleanList.contains(rightSideExpression.text)) {
-                    return this.equal(
+                return if (booleanList.contains(leftSideExpression.text) || booleanList.contains(rightSideExpression.text)) {
+                    this.equal(
                         variable,
                         leftSideExpression.text,
                         rightSideExpression.text,
                         isBooleanLiteralContext = true
                     )
                 } else {
-                    return this.equal(
+                    this.equal(
                         variable,
                         leftSideExpression.text,
                         rightSideExpression.text
@@ -77,22 +77,23 @@ class ArduinoSelectionStatement {
                 }
             }
             ">" -> {
-                println(">: greaterThan")
+                println("評価する不等号は，「>」greaterThan")
                 return this.greaterThan(variable, leftSideExpression.text, rightSideExpression.text)
             }
             "<" -> {
-                println("<: lessThan")
+                println("評価する不等号は，「<」lessThan")
                 return this.lessThan(variable, leftSideExpression.text, rightSideExpression.text)
             }
             ">=" -> {
-                println(">=: greaterThanOrEqual")
+                println("評価する不等号は，「>=」greaterThanOrEqual")
                 return this.greaterThanOrEqual(variable, leftSideExpression.text, rightSideExpression.text)
             }
             "<=" -> {
-                println("<=: lessThanOrEqual")
+                println("評価する不等号は，「<=」lessThanOrEqual")
                 return this.lessThanOrEqual(variable, leftSideExpression.text, rightSideExpression.text)
             }
             "!=" -> {
+                println("評価する不等号は，「!=」notEqual")
                 // 左辺，または右辺が真偽値だったら
                 if ((leftSideExpression is CPP14Parser.EqualityexpressionContext && rightSideExpression is
                             CPP14Parser.RelationalexpressionContext) || (leftSideExpression is CPP14Parser
@@ -112,10 +113,12 @@ class ArduinoSelectionStatement {
                     )
                 }
             }
+            else -> throw Exception(
+                "符号が入るべき箇所に${relationalOperator
+                    .text}が入っています．原因は，このメソッドにParseTreeを渡すときに木を深く掘っていないからかもしれません．とりあえずgetChild()" +
+                        "を使って中身を表示することをおすすめします．"
+            )
         }
-        // ホントは，ここで例外を出したほうがいいと思う．
-        println("最後まで来たゾイ")
-        return false
     }
 
     /**
@@ -133,11 +136,11 @@ class ArduinoSelectionStatement {
         // 式が真偽値の場合
         return if (isBooleanLiteralContext) {
             val formulaBoolean = this.judgeVariableOrBoolean(variable, leftSideExpression, rightSideExpression)
-            println(formulaBoolean)
+//            println(formulaBoolean)
             formulaBoolean.leftSideExpression == formulaBoolean.rightSideExpression
         } else {
             val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-            println(formulaDouble)
+//            println(formulaDouble)
             formulaDouble.leftSideExpression == formulaDouble.rightSideExpression
         }
     }
@@ -203,7 +206,7 @@ class ArduinoSelectionStatement {
         rightSideExpression: String
     ): Boolean {
         val formulaDouble = this.judgeVariableOrInt(variable, leftSideExpression, rightSideExpression)
-        println(formulaDouble)
+//        println(formulaDouble)
         return formulaDouble.leftSideExpression >= formulaDouble.rightSideExpression
     }
 
@@ -294,8 +297,8 @@ class ArduinoSelectionStatement {
         // 左辺式が変数で，右辺式がtrueかfalseのとき
         if (!booleanList.contains(leftSideExpression) && booleanList.contains(rightSideExpression)
         ) {
-            println(variable)
-            println("AAA: ${leftSideExpression}")
+//            println(variable)
+//            println("AAA: ${leftSideExpression}")
             formulaBoolean.leftSideExpression = variable[leftSideExpression]?.value?.toBoolean() ?: false
             formulaBoolean.rightSideExpression = convertBoolean(rightSideExpression)
 //            println(formulaBoolean)

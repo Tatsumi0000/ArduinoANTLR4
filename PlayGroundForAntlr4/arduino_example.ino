@@ -5,7 +5,7 @@ int led2 = 2;
 int led3 = 3;
 int led3 = 5;
 String str = "Hello, World";
-led3 = 4;
+led3 = 3;
 bool flag = true;
 void setup()
 {
@@ -17,11 +17,11 @@ if (led3 <= 4){
   led1 = 3;
   led1 = 2;
   }
-    if(true) {
+     if(led3 == 3) {
   led1 = 0;
   led1 = 100;
   }
-    if(led3 == 3) {
+    if(true) {
   led1 = 0;
   led1 = 100;
   }
